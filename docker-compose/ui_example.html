@@ -99,43 +99,77 @@
     </div>
 
     <script>
-        const responseDiv = document.getElementById('response');
-        let responseMessage = "";
+    const responseDiv = document.getElementById('response');
 
-        async function makeApiCall(text) {
-            try {
-                const response = await fetch("http://localhost:11434/api", {
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: "tinyllama:latest",
-                        prompt: text,
-                        stream: true
-                    })
-                });
-                const data = await response.json();
-                const newMessage = data.choices[0].message.content;
-                console.log(newMessage);
-                responseDiv.innerText += "\n\nResponse: \n" + newMessage;
-                responseDiv.style.display = 'block'; 
+    async function makeApiCall(text) {
+        try {
+            // Clear previous response and show the container
+            responseDiv.innerText = "Response: \n";
+            responseDiv.style.display = 'block';
 
-            } catch (error) {
-                console.error('Error making API call:', error);
-                responseDiv.innerHTML = 'Failed to fetch data.';
-                responseDiv.style.display = 'block'; 
+            const response = await fetch("http://localhost:11434/api/generate", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: "tinyllama:latest",
+                    prompt: text,
+                    stream: true
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
+
+            // Set up the stream reader
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let done = false;
+
+            while (!done) {
+                const { value, done: readerDone } = await reader.read();
+                done = readerDone;
+
+                if (value) {
+                    // Decode the chunk of bytes into text
+                    const chunk = decoder.decode(value, { stream: !done });
+
+                    // Splitting by newline because streaming sends individual JSON lines
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.trim() === '') continue;
+
+                        try {
+                            const parsedLine = JSON.parse(line);
+                            // Ollama uses .response for the text property in /api/generate
+                            if (parsedLine.response) {
+                                responseDiv.innerText += parsedLine.response;
+                            }
+                        } catch (e) {
+                            console.error("Error parsing chunk line", e);
+                        }
+                    }
+                }
+            }
+
+        } catch (error) {
+            console.error('Error making API call:', error);
+            responseDiv.innerHTML = 'Failed to fetch data.';
+            responseDiv.style.display = 'block';
         }
+    }
 
-        document.getElementById('submitBtn').addEventListener('click', () => {
-            const inputText = document.getElementById('inputText').value;
-            if (inputText) {
-                makeApiCall(inputText);
-            } else {
-                alert('Please enter some text');
-            }
-        });
+    document.getElementById('submitBtn').addEventListener('click', () => {
+        const inputText = document.getElementById('inputText').value;
+        if (inputText) {
+            makeApiCall(inputText);
+        } else {
+            alert('Please enter some text');
+        }
+    });
     </script>
 </body>
 </html>

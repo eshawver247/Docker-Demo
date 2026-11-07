@@ -1,5 +1,11 @@
 # Docker Ollama Container
 
+## Overview
+
+This document provides the necessary steps to start a docker container
+instance for ollama from scratch. The only requirement is docker is
+install and running on your machine. 
+
 ### Steps
 
 CPU Only:

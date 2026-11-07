@@ -9,7 +9,17 @@ Terminal.
 
 ## File Structure
 
-<!-- TODO: comeback and add later -->
+```text
+Docker-Demo/
+├── README.md
+|── docker-ollama-container/
+|   └── ollama_container.md
+├── docker-compose/
+│   ├── docker-compose.md
+│   ├── docker-compose-cpu.yml
+│   ├── entrypoint.sh
+│   └── ui_example.html
+```
 
 ## Install Steps
 
