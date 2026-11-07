@@ -1,0 +1,23 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama_compose
+    ports:
+      - 11434:11434
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    command: serve
+
+  web:
+    image: nginx:alpine
+    container_name: html_server
+    ports:
+      - "8080:80"
+    volumes:
+      # Maps your custom file directly to Nginx's default index file
+      - ./ui_example.html:/usr/share/nginx/html/index.html:ro,z
+
+volumes:
+  ollama_data:
+  web_data:
